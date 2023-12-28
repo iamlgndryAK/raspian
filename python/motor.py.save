@@ -1,0 +1,80 @@
+import serial from time import sleep import time import paho.mqtt.client 
+as mqtt from time import sleep
+
+
+broker_address = "172.20.10.2"
+broker_port = 1883
+client_id = "rasp"
+
+ultrasonic = "ultrasonic"
+motor = "motor"
+builtin_message = "hello there!!"
+
+topic=""
+
+
+try:
+    ser = serial.Serial('/dev/ttyACM0', 115200)  # Replace 'COM3' with the COM port of your Arduino
+    ser.baudrate = 115200
+    ser.bytesize = 8
+    ser.parity = 'N'
+    ser.stopbits = 1
+    sleep(3)
+except:
+    print("try different port")
+
+user = ""
+
+
+
+
+
+def on_connect(client, userdata, flags, rc):
+    global rc_status
+    rc_status = rc
+    if rc == 0:
+        print("Connected to MQTT broker")
+    else:
+        print("Failed to connect to MQTT broker")
+
+    return rc_status
+
+def on_disconnect(client, userdata, rc):
+    if rc != 0:
+        print("Disconnected!!!................")
+        sleep(3)
+        client.connect(broker_address, broker_port)
+
+def on_publish(client, userdata, mid):
+    print("Message published")
+
+
+def on_message(client, userdata, message):
+    message_builtin = ""
+    message_1 = str(message.payload.decode("utf-8"))
+    if message.topic == ultrasonic:
+        message_builtin = message.payload.decode("utf-8")
+        print(message_builtin)
+        print(message.topic)
+    elif message.topic == motor:
+        message_builtin = message.payload.decode("utf-8")
+        ser.write(message_builtin.encode("utf-8"))
+        print("sent")
+
+
+client = mqtt.Client(client_id)
+client.on_connect = on_connect
+client.connect(broker_address, broker_port)
+client.on_disconnect = on_disconnect
+client.on_message = on_message
+print("mmmmmmmm")
+client.subscribe(motor)
+
+client.loop_forever()
+
+
+
+
+
+
+
